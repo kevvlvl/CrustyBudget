@@ -3,7 +3,7 @@ use axum::Json;
 use log::info;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use crate::budget::db::{save, EXPENSE_TABLE, INCOME_TABLE};
+use crate::budget::db::{save, EXPENSE_TABLE};
 use crate::types::enums::Frequency;
 
 #[derive(Debug)]

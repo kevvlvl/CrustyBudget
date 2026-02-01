@@ -1,7 +1,7 @@
 use log::info;
 use redb::{Database, Error, ReadableTable, TableDefinition, TableHandle, WriteTransaction};
 
-pub const DB_NAME: &str = "crusty.redb";
+const DB_NAME: &str = "crusty.redb";
 const ID_SEQ: TableDefinition<&str, u64> = TableDefinition::new("id_seq");
 pub const INCOME_TABLE: TableDefinition<u64, &str> = TableDefinition::new("income");
 pub const EXPENSE_TABLE: TableDefinition<u64, &str> = TableDefinition::new("expenses");
