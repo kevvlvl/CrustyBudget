@@ -1,20 +1,18 @@
+use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::Json;
 use log::info;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use crate::budget::db::{save, EXPENSE_TABLE};
 use crate::money_str;
+use crate::types::budget_structs::ExpenseEntry;
 use crate::types::enums::Frequency;
 
-#[derive(Debug)]
-#[derive(Serialize)]
+
+
 #[derive(Deserialize)]
-pub struct ExpenseEntry {
-    amount: Decimal,
-    destination: String,
-    frequency: Frequency,
-    details: Option<String>,
+pub struct ExpenseQuery {
+    frequency: Frequency
 }
 
 pub async fn define_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
@@ -28,4 +26,20 @@ pub async fn define_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<Ex
     save(&payload_str, EXPENSE_TABLE).expect("ERROR: Failed Writing to redb database");
 
     Ok(Json(payload))
+}
+
+pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<ExpenseEntry>, StatusCode> {
+
+    let expense_query: ExpenseQuery = expense_query.0;
+
+    info!("Get expense for frequency: {:?}", expense_query.frequency);
+
+    let result: ExpenseEntry = ExpenseEntry {
+        amount: Default::default(),
+        destination: None,
+        frequency: expense_query.frequency,
+        details: None,
+    };
+
+    Ok(Json(result))
 }

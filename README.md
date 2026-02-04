@@ -24,3 +24,14 @@ curl -X POST localhost:3000/api/budget/income -H 'Content-Type: application/json
 ```
 curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/json' -d '{"destination": "Cellphone Service", "amount": "45", "frequency": "Monthly"}'
 ```
+
+### Get total income per month
+```
+curl localhost:3000/api/budget/income\?frequency=Monthly
+```
+
+### Get total expenses biweekly
+```
+curl localhost:3000/api/budget/expense\?frequency=Biweekly
+```
+
