@@ -34,5 +34,5 @@ async fn main() {
 }
 
 async fn is_healthy() -> &'static str {
-    "OK"
+    "Is Healthy"
 }
