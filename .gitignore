@@ -2,3 +2,5 @@
 **/target
 .idea
 *.redb
+node_modules
+**/node_modules
