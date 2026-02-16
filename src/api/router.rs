@@ -22,3 +22,42 @@ pub fn router() -> Router {
         .route(EXPENSE_PATH, get(budget::expense::get_expense))
         .route(EXPENSE_PATH, post(budget::expense::define_expense))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{
+        body::{
+            Body,
+            to_bytes
+        },
+        http::{
+            Request,
+            StatusCode
+        }
+    };
+    use axum::body::Bytes;
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn test_health_check_returns_ok() {
+        let app = router();
+
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri(HEALTH_PATH)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        // Convert body to bytes to check the content
+        let body: Bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        assert_eq!(&body[..], b"OK");
+    }
+}
