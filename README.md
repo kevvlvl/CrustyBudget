@@ -35,3 +35,9 @@ curl localhost:3000/api/budget/income\?frequency=Monthly
 curl localhost:3000/api/budget/expense\?frequency=Biweekly
 ```
 
+# TODO
+
+- make a front-end using Leptos (Rust + WASM)
+    - Income entry form
+    - Expense entry form
+    - Summary form, drop down recalculate per frequency
