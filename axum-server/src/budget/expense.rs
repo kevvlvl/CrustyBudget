@@ -8,8 +8,6 @@ use crate::money_str;
 use crate::types::budget_structs::ExpenseEntry;
 use crate::types::enums::Frequency;
 
-
-
 #[derive(Deserialize)]
 pub struct ExpenseQuery {
     frequency: Frequency
