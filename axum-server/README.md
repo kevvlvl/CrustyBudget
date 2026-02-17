@@ -1,4 +1,4 @@
-# Crusty Budget App
+# axum-server
 
 Axum+Tokio API for a small budget/personal finance app. Exposes a few basic endpoints to handle personal financing needs
 
