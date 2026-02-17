@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, TextInput, NativeSelect } from '@mantine/core';
 
 const AddIncome = () => {
     const [formData, setFormData] = useState({
@@ -37,23 +38,23 @@ const AddIncome = () => {
     };
 
     return (
-        <div style={{ padding: '20px', maxWidth: '400px' }}>
+        <div>
             <h2>Add Income</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <input
+                <TextInput
                     placeholder="Source (e.g. Salary)"
                     value={formData.source}
                     onChange={(e) => setFormData({...formData, source: e.target.value})}
                     required
                 />
-                <input
+                <TextInput
                     type="number"
                     placeholder="Amount"
                     value={formData.amount}
                     onChange={(e) => setFormData({...formData, amount: e.target.value})}
                     required
                 />
-                <select
+                <NativeSelect
                     value={formData.frequency}
                     onChange={(e) => setFormData({...formData, frequency: e.target.value})}
                 >
@@ -61,12 +62,12 @@ const AddIncome = () => {
                     <option value="Weekly">Weekly</option>
                     <option value="Biweekly">Biweekly</option>
                     <option value="Monthly">Monthly</option>
-                </select>
-                <button type="submit">Submit</button>
+                </NativeSelect>
+                <Button type="submit">Submit</Button>
             </form>
 
             {status.message && (
-                <p style={{ color: status.type === 'error' ? 'red' : 'green' }}>
+                <p>
                     {status.message}
                 </p>
             )}
