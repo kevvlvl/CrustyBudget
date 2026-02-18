@@ -20,15 +20,15 @@ RUST_LOG=info cargo run
 curl -X POST localhost:3000/api/budget/income -H 'Content-Type: application/json' -d '{"source": "Work", "amount": "1500", "frequency": "Biweekly"}'
 ```
 
-## Add an expense
+### Add an expense
 ```
 curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/json' -d '{"destination": "Cellphone Service", "amount": "45", "frequency": "Monthly"}'
 ```
 
-## Add a credit card payment due
+### Add a credit card payment due
 
 ```
-curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"amount": "1250.74", "payment_date": "2026-03-01T00:00:00", "details": "My Super CreditCard"}'
+curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"amount": "1250.74", "payment_date": "2026-03-01", "details": "My Super CreditCard"}'
 ```
 
 ### Get total income per month

@@ -2,7 +2,7 @@ use std::ops::{Div, Mul};
 use log::info;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use crate::types::budget_structs::IncomeEntry;
+use crate::types::budget_structs::{FinancialEntry, SummaryReport};
 use crate::types::enums::Frequency;
 
 /**
@@ -14,18 +14,16 @@ Return a dollar amount with the specified currency, with two decimals
     }
 }
 
-pub fn summarize_income(frequency: &Frequency, incomes: Vec<IncomeEntry>) -> IncomeEntry {
+pub fn summarize_calc<T: FinancialEntry>(frequency: &Frequency, entries: Vec<T>) -> SummaryReport {
 
-    let mut summary_income: IncomeEntry = IncomeEntry {
+    let mut summary_income: SummaryReport = SummaryReport {
         amount: Default::default(),
-        source: None,
-        frequency: frequency.clone(),
         details: Some("Summary of filtered incomes".to_string()),
     };
 
-    for income in incomes {
-        info!("Current income {:?}", income);
-        summary_income.amount += get_frequency_income(frequency, &income.frequency, income.amount);
+    for entry in entries {
+        info!("Current entry: {}", entry.get_details());
+        summary_income.amount += get_frequency_amount(frequency, &entry.get_frequency(), entry.get_amount());
     }
 
     summary_income
@@ -36,7 +34,7 @@ Return the amount for the desired target frequency.
 ASSUMPTIONS FOR SIMPLIFICATION: 1 month contains 31 days, biweekly means twice a month
 Personal project disclaimer: This is not exactly accurate okay!
 **/
-fn get_frequency_income(target_frequency: &Frequency, amount_frequency: &Frequency, amount: Decimal) -> Decimal {
+fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequency, amount: Decimal) -> Decimal {
 
     let res: Decimal;
     match target_frequency {
@@ -115,113 +113,113 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_frequency_income_from_biweekly_to_daily() {
+    fn test_get_frequency_amount_from_biweekly_to_daily() {
 
-        let res = get_frequency_income(&Frequency::Daily, &Frequency::Biweekly, dec!(2800));
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Biweekly, dec!(2800));
         assert_eq!(res, dec!(200));
     }
 
     #[test]
-    fn test_get_frequency_income_from_biweekly_to_weekly() {
+    fn test_get_frequency_amount_from_biweekly_to_weekly() {
 
-        let res = get_frequency_income(&Frequency::Weekly, &Frequency::Biweekly, dec!(333));
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Biweekly, dec!(333));
         assert_eq!(res, dec!(166.50));
     }
 
     #[test]
-    fn test_get_frequency_income_from_biweekly_to_biweekly() {
+    fn test_get_frequency_amount_from_biweekly_to_biweekly() {
 
-        let res = get_frequency_income(&Frequency::Biweekly, &Frequency::Biweekly, dec!(333));
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Biweekly, dec!(333));
         assert_eq!(res, dec!(333));
     }
 
     #[test]
-    fn test_get_frequency_income_from_biweekly_to_monthly() {
+    fn test_get_frequency_amount_from_biweekly_to_monthly() {
 
-        let res = get_frequency_income(&Frequency::Monthly, &Frequency::Biweekly, dec!(500));
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Biweekly, dec!(500));
         assert_eq!(res, dec!(1000));
     }
 
     #[test]
-    fn test_get_frequency_income_from_weekly_to_daily() {
+    fn test_get_frequency_amount_from_weekly_to_daily() {
 
-        let res = get_frequency_income(&Frequency::Daily, &Frequency::Weekly, dec!(1400));
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Weekly, dec!(1400));
         assert_eq!(res, dec!(200));
     }
 
     #[test]
-    fn test_get_frequency_income_from_weekly_to_weekly() {
+    fn test_get_frequency_amount_from_weekly_to_weekly() {
 
-        let res = get_frequency_income(&Frequency::Weekly, &Frequency::Weekly, dec!(222));
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Weekly, dec!(222));
         assert_eq!(res, dec!(222));
     }
 
     #[test]
-    fn test_get_frequency_income_from_weekly_to_biweekly() {
+    fn test_get_frequency_amount_from_weekly_to_biweekly() {
 
-        let res = get_frequency_income(&Frequency::Biweekly, &Frequency::Weekly, dec!(222));
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Weekly, dec!(222));
         assert_eq!(res, dec!(444));
     }
 
     #[test]
-    fn test_get_frequency_income_from_weekly_to_monthly() {
+    fn test_get_frequency_amount_from_weekly_to_monthly() {
 
-        let res = get_frequency_income(&Frequency::Monthly, &Frequency::Weekly, dec!(222));
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Weekly, dec!(222));
         assert_eq!(res, dec!(888));
     }
 
     #[test]
-    fn test_get_frequency_income_from_daily_to_daily() {
+    fn test_get_frequency_amount_from_daily_to_daily() {
 
-        let res = get_frequency_income(&Frequency::Daily, &Frequency::Daily, dec!(50));
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Daily, dec!(50));
         assert_eq!(res, dec!(50));
     }
 
     #[test]
-    fn test_get_frequency_income_from_daily_to_weekly() {
+    fn test_get_frequency_amount_from_daily_to_weekly() {
 
-        let res = get_frequency_income(&Frequency::Weekly, &Frequency::Daily, dec!(5));
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Daily, dec!(5));
         assert_eq!(res, dec!(35));
     }
 
     #[test]
-    fn test_get_frequency_income_from_daily_to_biweekly() {
+    fn test_get_frequency_amount_from_daily_to_biweekly() {
 
-        let res = get_frequency_income(&Frequency::Biweekly, &Frequency::Daily, dec!(5));
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Daily, dec!(5));
         assert_eq!(res, dec!(70));
     }
     #[test]
-    fn test_get_frequency_income_from_daily_to_monthly() {
+    fn test_get_frequency_amount_from_daily_to_monthly() {
 
-        let res = get_frequency_income(&Frequency::Monthly, &Frequency::Daily, dec!(5));
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Daily, dec!(5));
         assert_eq!(res, dec!(155));
     }
 
     #[test]
-    fn test_get_frequency_income_from_monthly_to_daily() {
+    fn test_get_frequency_amount_from_monthly_to_daily() {
 
-        let res = get_frequency_income(&Frequency::Daily, &Frequency::Monthly, dec!(2500));
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Monthly, dec!(2500));
         assert_eq!(res,  dec!(80.6452));
     }
 
     #[test]
-    fn test_get_frequency_income_from_monthly_to_weekly() {
+    fn test_get_frequency_amount_from_monthly_to_weekly() {
 
-        let res = get_frequency_income(&Frequency::Weekly, &Frequency::Monthly, dec!(2500));
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Monthly, dec!(2500));
         assert_eq!(res,  dec!(625));
     }
 
     #[test]
-    fn test_get_frequency_income_from_monthly_to_biweekly() {
+    fn test_get_frequency_amount_from_monthly_to_biweekly() {
 
-        let res = get_frequency_income(&Frequency::Biweekly, &Frequency::Monthly, dec!(2500));
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Monthly, dec!(2500));
         assert_eq!(res,  dec!(1250));
     }
 
     #[test]
-    fn test_get_frequency_income_from_monthly_to_monthly() {
+    fn test_get_frequency_amount_from_monthly_to_monthly() {
 
-        let res = get_frequency_income(&Frequency::Monthly, &Frequency::Monthly, dec!(1234));
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Monthly, dec!(1234));
         assert_eq!(res,  dec!(1234));
     }
 }

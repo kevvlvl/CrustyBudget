@@ -1,6 +1,6 @@
 use axum::http::StatusCode;
 use axum::Json;
-use chrono::{NaiveDateTime};
+use chrono::{NaiveDate};
 use log::info;
 use crate::budget::db::{save, CC_TABLE};
 use crate::money_str;
@@ -11,7 +11,7 @@ pub async fn add_entry(Json(payload): Json<CreditCardExpenseEntry>) -> Result<Js
     info!("Received cc payload: {:?}", payload);
 
     let amount_str: String = money_str!("CAD", payload.amount);
-    let due_date: NaiveDateTime = payload.payment_date.unwrap();
+    let due_date: NaiveDate = payload.payment_date.unwrap();
     info!("Received cc with amount: {} due on date {}", amount_str, due_date);
 
     let payload_str = serde_json::to_string(&payload).unwrap();

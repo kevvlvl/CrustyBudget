@@ -11,3 +11,17 @@ pub enum Frequency {
     Biweekly,
     Monthly
 }
+
+#[derive(Clone)]
+#[derive(Debug)]
+#[derive(PartialEq)]
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub enum ExpenseCategory {
+    Entertainment,
+    Food,
+    Housing,
+    Transportation,
+    Utilities,
+    Misc
+}
