@@ -13,7 +13,7 @@ pub struct ExpenseQuery {
     frequency: Frequency
 }
 
-pub async fn define_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
+pub async fn add_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
 
     info!("Received expense payload: {:?}", payload);
 

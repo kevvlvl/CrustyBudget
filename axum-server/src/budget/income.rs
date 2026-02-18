@@ -15,7 +15,7 @@ pub struct IncomeQuery {
     frequency: Frequency
 }
 
-pub async fn define_income(Json(payload): Json<IncomeEntry>) -> Result<Json<IncomeEntry>, StatusCode> {
+pub async fn add_income(Json(payload): Json<IncomeEntry>) -> Result<Json<IncomeEntry>, StatusCode> {
 
     info!("Received income payload: {:?}", payload);
 
