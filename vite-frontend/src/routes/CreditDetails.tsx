@@ -1,7 +1,7 @@
 export default function CreditDetails() {
     return(
         <div>
-            <h2>Income details</h2>
+            <h2>Credit details</h2>
         </div>
     );
 }
