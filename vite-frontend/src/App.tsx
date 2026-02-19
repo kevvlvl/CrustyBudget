@@ -3,47 +3,39 @@ import AddExpense from "./components/AddExpense.tsx";
 
 import '@mantine/core/styles.css';
 
-import {AppShell, Button, Collapse, Group, SimpleGrid, MantineProvider} from '@mantine/core'
-import {useDisclosure} from "@mantine/hooks";
+import {AppShell, Button, Group, MantineProvider, SimpleGrid, Stack} from '@mantine/core'
 import AddCCEntry from "./components/AddCCEntry.tsx";
 
 function App() {
-
-    const [openedIncome, incomeHandlers] = useDisclosure(false);
-    const [openedExpense, expenseHandlers] = useDisclosure(false);
-    const [openedCCEntry, ccEntryHandlers] = useDisclosure(false);
 
     return (
       <MantineProvider defaultColorScheme="auto">
           <AppShell header={{height: 60}}>
               <AppShell.Header p={"md"}>
                   <Group gap={"lg"}>
-                      <Button variant={"default"} onClick={incomeHandlers.toggle}>Add Income</Button>
-                      <Button variant={"default"} onClick={expenseHandlers.toggle}>Add Expense</Button>
-                      <Button variant={"default"} onClick={ccEntryHandlers.toggle}>Add Credit Card Entry</Button>
+                      <Button variant={"default"}>Show Income Details</Button>
+                      <Button variant={"default"}>Show Expense Details</Button>
+                      <Button variant={"default"}>Show Credit Details</Button>
                       <Button variant={"default"}>Generate Report</Button>
                   </Group>
               </AppShell.Header>
 
               <AppShell.Main>
 
-                  <SimpleGrid cols={3}>
-                      <div>
-                          <Collapse in={openedIncome} transitionTimingFunction={"linear"}>
+                  <Stack align={"stretch"} justify={"center"} gap={"md"} style={{marginLeft: 20}}>
+
+                      <SimpleGrid cols={2}>
+                          <div>
                               <AddIncome />
-                          </Collapse>
-                      </div>
-                      <div>
-                          <Collapse in={openedExpense}>
+                          </div>
+
+                          <div>
                               <AddExpense />
-                          </Collapse>
-                      </div>
-                      <div>
-                          <Collapse in={openedCCEntry}>
-                              <AddCCEntry />
-                          </Collapse>
-                      </div>
-                  </SimpleGrid>
+                          </div>
+                      </SimpleGrid>
+
+                      <AddCCEntry />
+                  </Stack>
 
               </AppShell.Main>
           </AppShell>
