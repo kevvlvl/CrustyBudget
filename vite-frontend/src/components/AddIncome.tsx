@@ -39,7 +39,7 @@ const AddIncome = () => {
 
     return (
         <div>
-            <h2>Add Income</h2>
+            <h3>Add Income</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <TextInput
                     placeholder="Source (e.g. Salary)"

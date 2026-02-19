@@ -38,7 +38,7 @@ const AddCCEntry = () => {
 
     return (
         <div>
-            <h2>Add Credit Card Entry</h2>
+            <h3>Add Credit Card Entry</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <NumberInput
                     placeholder="Amount due"

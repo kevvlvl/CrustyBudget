@@ -39,7 +39,7 @@ const AddExpense = () => {
 
     return (
         <div>
-            <h2>Add Expense</h2>
+            <h3>Add Expense</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <TextInput
                     placeholder="Destination (e.g. Mobile Phone Bill)"
