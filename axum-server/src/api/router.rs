@@ -6,6 +6,7 @@ use crate::budget;
 
 const HEALTH_PATH: &str = "/api/health";
 const INCOME_PATH: &str = "/api/budget/income";
+const INCOME_TOTAL_PATH: &str = "/api/budget/income/total";
 const EXPENSE_PATH: &str = "/api/budget/expense";
 
 const CC_PATH: &str = "/api/budget/cc";
@@ -21,7 +22,8 @@ pub fn router() -> Router {
 
     Router::new()
         .route(HEALTH_PATH, get(is_healthy))
-        .route(INCOME_PATH, get(budget::income::get_income))
+        .route(INCOME_TOTAL_PATH, get(budget::income::get_income))
+        .route(INCOME_PATH, get(budget::income::get_income_details))
         .route(INCOME_PATH, post(budget::income::add_income))
         .route(EXPENSE_PATH, get(budget::expense::get_expense))
         .route(EXPENSE_PATH, post(budget::expense::add_expense))

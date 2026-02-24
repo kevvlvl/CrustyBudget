@@ -55,7 +55,7 @@ impl FinancialEntry for IncomeEntry {
     fn get_details(&self) -> String {
 
         let src = self.source.clone().unwrap();
-        let d = self.details.clone().unwrap();
+        let d = self.details.clone().unwrap_or("NO_DEST".to_string());
         format!("source : {} - details: {}", src, d)
     }
 
@@ -72,7 +72,7 @@ impl FinancialEntry for ExpenseEntry {
     fn get_details(&self) -> String {
 
         let dst = self.destination.clone().unwrap();
-        let d = self.details.clone().unwrap();
+        let d = self.details.clone().unwrap_or("NO_DEST".to_string());
         format!("destination : {} - details: {}", dst, d)
     }
 

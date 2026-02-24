@@ -28,17 +28,30 @@ pub async fn add_income(Json(payload): Json<IncomeEntry>) -> Result<Json<IncomeE
     Ok(Json(payload))
 }
 
+fn get_positive_income_filter() -> fn(&IncomeEntry) -> bool {
+    |i: &IncomeEntry| i.amount.gt(&dec!(0))
+}
+
+pub async fn get_income_details() -> Result<Json<Vec<IncomeEntry>>, StatusCode> {
+
+    let res = get::<_, IncomeEntry>(get_positive_income_filter(), INCOME_TABLE)
+        .map_err(|e| e.to_string()).unwrap();
+
+    info!("Incomes found: {:?}", res);
+
+    Ok(Json(res))
+}
+
 pub async fn get_income(income_query: Query<IncomeQuery>) -> Result<Json<SummaryReport>, StatusCode> {
 
     let income_query: IncomeQuery = income_query.0;
 
     info!("Get income for frequency: {:?}", income_query.frequency);
 
-    let items_filter = |i: &IncomeEntry| i.amount.gt(&dec!(0));
-    let items_found = get::<_, IncomeEntry>(items_filter, INCOME_TABLE)
+    let items_found = get::<_, IncomeEntry>(get_positive_income_filter(), INCOME_TABLE)
         .map_err(|e| e.to_string());
 
-    info!("Get income for items: {:?}", items_found);
+    info!("Incomes found: {:?}", items_found);
 
     let res = summarize_calc(&income_query.frequency, items_found.unwrap());
     Ok(Json(res))

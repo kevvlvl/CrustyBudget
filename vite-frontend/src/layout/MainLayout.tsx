@@ -23,8 +23,6 @@ export function MainLayout() {
                             <Tabs.Tab value={"creditdetails"}>Credit Details</Tabs.Tab>
                         </Tabs.List>
                     </Tabs>
-
-                    <Button variant={"default"}>Generate Report</Button>
                 </Group>
             </AppShell.Header>
 
