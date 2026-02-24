@@ -31,6 +31,11 @@ curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/jso
 curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"amount": "1250.74", "payment_date": "2026-03-01", "details": "My Super CreditCard"}'
 ```
 
+### Get income details
+```
+curl localhost:3000/api/budget/income
+```
+
 ### Get total income per month
 ```
 curl localhost:3000/api/budget/income\?frequency=Monthly
