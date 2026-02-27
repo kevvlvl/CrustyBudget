@@ -1,7 +1,7 @@
 import { PieChart } from '@mantine/charts';
 import '@mantine/charts/styles.css'
-import {Center, Container, Loader} from "@mantine/core";
-import {useEffect, useState} from "react";
+import {Box, Center, Grid, Loader, Paper, Table, type TableData} from "@mantine/core";
+import {useEffect, useMemo, useState} from "react";
 
 interface SummaryData {
     frequency: string;
@@ -28,7 +28,8 @@ const COLOR_MAP: Record<string, string> = {
 
 export default function Summary() {
 
-    const [data, setData] = useState<ChartDataItem[]>([]);
+    const [incomeTableData, setIncomeTableData] = useState<SummaryDataItem[]>([]);
+    const [incomeGraphData, setIncomeGraphData] = useState<ChartDataItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -53,11 +54,11 @@ export default function Summary() {
                 }
 
                 console.log('formattedData = ', formattedChartData);
-
+                setIncomeTableData(rawData.items);
                 return formattedChartData;
             })
             .then(result => {
-                setData(result);
+                setIncomeGraphData(result);
             })
             .catch(error => {
                 console.error("Failed fetching: ", error);
@@ -68,6 +69,15 @@ export default function Summary() {
             })
     }, []);
 
+    const tableData: TableData = useMemo(() => ({
+        head: ['Name', 'Category', 'Amount'],
+        body: incomeTableData.map((item) => [
+            item.name,
+            item.category,
+            `$${Number(item.amount).toFixed(2)}`,
+        ]),
+    }), [incomeTableData]);
+
     if (loading)
         return <Center h={350}><Loader color="blue" /></Center>;
 
@@ -75,37 +85,44 @@ export default function Summary() {
         return <Center h={350}>Error: {error}</Center>;
 
     return(
-        <Container
-            size={"responsive"}
-            style={{maxWidth: '100%', maxHeight: '100%', width: 450, height: 400}}
-        >
-            <h2>Summary</h2>
 
-            <h3>Incomes</h3>
+        <Grid gutter="md" align="flex-start">
+            <Grid.Col span={{ base: 12, md: 6 }}>
 
-            <PieChart
-                data={data}
-                labelsPosition={"outside"}
-                labelsType={"value"}
-                h={350}
-                size={350}
-                withLabels
-                withLabelsLine
-                withTooltip
-            />
+                <h2>Income</h2>
 
-            <h3>Breakdown</h3>
+                <Paper withBorder p="md" radius="md" h="100%">
 
-            ITEMIZED TABLE HERE
+                <Box h={350} w={450}>
 
-            <h3>Expenses</h3>
+                    <PieChart
+                        data={incomeGraphData}
+                        labelsPosition={"outside"}
+                        labelsType={"value"}
+                        h={250}
+                        size={250}
+                        withLabels
+                        withLabelsLine
+                        withTooltip
+                    />
 
-            CHART HERE
+                </Box>
 
-            <h3>Breakdown</h3>
+                </Paper>
 
-            ITEMIZED TABLE HERE
+            </Grid.Col>
 
-        </Container>
+            <Grid.Col span={{ base: 12, md: 6 }}>
+
+                <h2>Breakdown</h2>
+
+                <Paper withBorder p="md" radius="md" h="100%">
+
+                <Table data={tableData} striped highlightOnHover verticalSpacing="sm" />
+
+                </Paper>
+
+            </Grid.Col>
+        </Grid>
     );
 }
