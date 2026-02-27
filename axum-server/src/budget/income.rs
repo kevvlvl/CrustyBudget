@@ -32,16 +32,6 @@ fn get_positive_income_filter() -> fn(&IncomeEntry) -> bool {
     |i: &IncomeEntry| i.amount.gt(&dec!(0))
 }
 
-pub async fn get_income_details() -> Result<Json<Vec<IncomeEntry>>, StatusCode> {
-
-    let res = get::<_, IncomeEntry>(get_positive_income_filter(), INCOME_TABLE)
-        .map_err(|e| e.to_string()).unwrap();
-
-    info!("Incomes found: {:?}", res);
-
-    Ok(Json(res))
-}
-
 pub async fn get_income(income_query: Query<IncomeQuery>) -> Result<Json<SummaryReport>, StatusCode> {
 
     let income_query: IncomeQuery = income_query.0;

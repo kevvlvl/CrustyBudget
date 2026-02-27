@@ -1,4 +1,4 @@
-import {AppShell, Button, Container, Group, Tabs} from "@mantine/core";
+import {AppShell, Container, Group, Tabs} from "@mantine/core";
 import {Outlet, useLocation, useNavigate} from "react-router-dom";
 
 
@@ -18,8 +18,7 @@ export function MainLayout() {
                     <Tabs value={activeTab} onChange={(value) => navigate(value === 'home' ? '/' : `/${value}`)}>
                         <Tabs.List>
                             <Tabs.Tab value={"home"} >Home</Tabs.Tab>
-                            <Tabs.Tab value={"incomedetails"}>Income Details</Tabs.Tab>
-                            <Tabs.Tab value={"expensedetails"}>Expense Details</Tabs.Tab>
+                            <Tabs.Tab value={"summary"}>Summary</Tabs.Tab>
                             <Tabs.Tab value={"creditdetails"}>Credit Details</Tabs.Tab>
                         </Tabs.List>
                     </Tabs>

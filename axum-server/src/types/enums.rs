@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
@@ -24,4 +25,15 @@ pub enum ExpenseCategory {
     Transportation,
     Utilities,
     Misc
+}
+
+impl Display for Frequency {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match  *self {
+            Frequency::Daily => write!(f, "Daily"),
+            Frequency::Weekly => write!(f, "Weekly"),
+            Frequency::Biweekly => write!(f, "Biweekly"),
+            Frequency::Monthly => write!(f, "Monthly"),
+        }
+    }
 }

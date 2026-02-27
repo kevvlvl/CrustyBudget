@@ -5,8 +5,10 @@ use crate::types::enums::{ExpenseCategory, Frequency};
 
 pub trait FinancialEntry {
     fn get_amount(&self) -> Decimal;
-    fn get_details(&self) -> String;
+    fn get_name(&self) -> String;
     fn get_frequency(&self) -> Frequency;
+
+    fn get_category(&self) -> String;
 }
 
 #[derive(Debug)]
@@ -43,8 +45,17 @@ pub struct CreditCardExpenseEntry {
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct SummaryReport {
+    pub frequency: Frequency,
+    pub items: Vec<SummaryReportItem>,
+}
+
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub struct SummaryReportItem {
     pub amount: Decimal,
-    pub details: Option<String>,
+    pub category: String,
+    pub name: String,
 }
 
 impl FinancialEntry for IncomeEntry {
@@ -52,15 +63,16 @@ impl FinancialEntry for IncomeEntry {
         self.amount
     }
 
-    fn get_details(&self) -> String {
-
-        let src = self.source.clone().unwrap();
-        let d = self.details.clone().unwrap_or("NO_DEST".to_string());
-        format!("source : {} - details: {}", src, d)
+    fn get_name(&self) -> String {
+        self.source.clone().unwrap()
     }
 
     fn get_frequency(&self) -> Frequency {
         self.frequency.clone()
+    }
+
+    fn get_category(&self) -> String {
+        self.source.clone().unwrap()
     }
 }
 
@@ -69,14 +81,21 @@ impl FinancialEntry for ExpenseEntry {
         self.amount
     }
 
-    fn get_details(&self) -> String {
-
-        let dst = self.destination.clone().unwrap();
-        let d = self.details.clone().unwrap_or("NO_DEST".to_string());
-        format!("destination : {} - details: {}", dst, d)
+    fn get_name(&self) -> String {
+        self.destination.clone().unwrap()
     }
 
     fn get_frequency(&self) -> Frequency {
         self.frequency.clone()
+    }
+
+    fn get_category(&self) -> String {
+        self.destination.clone().unwrap()
+    }
+}
+
+impl PartialEq for SummaryReportItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.amount.eq(&other.amount) && self.name == other.name
     }
 }

@@ -28,14 +28,17 @@ pub async fn add_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<Expen
     Ok(Json(payload))
 }
 
+fn get_positive_expense_filter() -> fn(&ExpenseEntry) -> bool {
+    |i: &ExpenseEntry| i.amount.gt(&dec!(0))
+}
+
 pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<SummaryReport>, StatusCode> {
 
     let expense_query: ExpenseQuery = expense_query.0;
 
     info!("Get expense for frequency: {:?}", expense_query.frequency);
 
-    let items_filter = |i: &ExpenseEntry| i.amount.gt(&dec!(0));
-    let items_found = get::<_, ExpenseEntry>(items_filter, EXPENSE_TABLE)
+    let items_found = get::<_, ExpenseEntry>(get_positive_expense_filter(), EXPENSE_TABLE)
         .map_err(|e| e.to_string());
 
     info!("Get expense for items: {:?}", items_found);
