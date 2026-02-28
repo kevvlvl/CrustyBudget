@@ -1,6 +1,7 @@
 import { PieChart } from '@mantine/charts';
 import '@mantine/charts/styles.css'
-import {Box, Center, Container, Grid, Loader, Paper, Table, type TableData} from "@mantine/core";
+import {Box, Center, Container, Grid, Loader, NativeSelect, Paper, Table, type TableData} from "@mantine/core";
+import {IconClock} from '@tabler/icons-react';
 import {useEffect, useMemo, useState} from "react";
 
 interface SummaryData {
@@ -35,6 +36,7 @@ const EXPENSE_COLOR_MAP: Record<string, string> = {
 
 export default function Summary() {
 
+    const [frequency, setFrequency] = useState('Monthly');
     const [incomeTableData, setIncomeTableData] = useState<SummaryDataItem[]>([]);
     const [incomeGraphData, setIncomeGraphData] = useState<ChartDataItem[]>([]);
     const [expenseTableData, setExpenseTableData] = useState<SummaryDataItem[]>([]);
@@ -43,7 +45,7 @@ export default function Summary() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('http://localhost:3000/api/budget/income?frequency=Monthly')
+        fetch(`http://localhost:3000/api/budget/income?frequency=${frequency}`)
             .then(res => res.json())
             .then(res => {
 
@@ -77,7 +79,7 @@ export default function Summary() {
                 setLoading(false);
             })
 
-        fetch('http://localhost:3000/api/budget/expense?frequency=Monthly')
+        fetch(`http://localhost:3000/api/budget/expense?frequency=${frequency}`)
             .then(res => res.json())
             .then(res => {
 
@@ -110,25 +112,37 @@ export default function Summary() {
             .finally(() => {
                 setLoading(false);
             })
-    }, []);
+    }, [frequency]);
 
-    const incomeTableDataProp: TableData = useMemo(() => ({
-        head: ['Name', 'Category', 'Amount'],
-        body: incomeTableData.map((item) => [
-            item.name,
-            item.category,
-            `$${Number(item.amount).toFixed(2)}`,
-        ]),
-    }), [incomeTableData]);
+    const incomeTableDataProp: TableData = useMemo(() => {
 
-    const expenseTableDataProp: TableData = useMemo(() => ({
-        head: ['Name', 'Category', 'Amount'],
-        body: expenseTableData.map((item) => [
-            item.name,
-            item.category,
-            `$${Number(item.amount).toFixed(2)}`,
-        ]),
-    }), [expenseTableData]);
+        const total = incomeTableData.reduce((acc, item) => acc + Number(item.amount), 0);
+
+        return {
+            head: ['Name', 'Category', 'Amount'],
+            body: incomeTableData.map((item) => [
+                item.name,
+                item.category,
+                `$${Number(item.amount).toFixed(2)}`,
+            ]),
+            foot: ['', 'Total', `$${Number(total).toFixed(2)}`],
+        }
+    }, [incomeTableData]);
+
+    const expenseTableDataProp: TableData = useMemo(() => {
+
+        const total = expenseTableData.reduce((acc, item) => acc + Number(item.amount), 0);
+
+        return {
+            head: ['Name', 'Category', 'Amount'],
+            body: expenseTableData.map((item) => [
+                item.name,
+                item.category,
+                `$${Number(item.amount).toFixed(2)}`,
+            ]),
+            foot: ['', 'Total', `$${Number(total).toFixed(2)}`],
+        }
+    }, [expenseTableData]);
 
     if (loading)
         return <Center h={350}><Loader color="blue" /></Center>;
@@ -138,34 +152,40 @@ export default function Summary() {
 
     return(
         <Container>
+
+            <NativeSelect
+                w={200}
+                label={"Frequency"}
+                leftSection={<IconClock size={16} />}
+                withAsterisk
+                description={"All amounts will be recalculated for the set Frequency"}
+                data={['Daily', 'Weekly', 'Biweekly', 'Monthly']}
+                value={frequency}
+                onChange={(evt) => setFrequency(evt.currentTarget.value)}
+            />
+
             <Grid gutter="md" align="flex-start">
                 <Grid.Col span={{ base: 12, md: 6 }}>
 
                     <h2>Income</h2>
-
-                    <Paper withBorder p="md" radius="md" h="100%">
-                        <Box h={280} w={300}>
-                            <PieChart
-                                data={incomeGraphData}
-                                labelsPosition={"outside"}
-                                labelsType={"value"}
-                                h={200}
-                                size={200}
-                                withLabels
-                                withLabelsLine
-                                withTooltip
-                            />
-                        </Box>
-                    </Paper>
+                    <Box h={280} w={350}>
+                        <PieChart
+                            data={incomeGraphData}
+                            labelsPosition={"outside"}
+                            labelsType={"percent"}
+                            size={200}
+                            withLabels
+                            withTooltip
+                        />
+                    </Box>
 
                 </Grid.Col>
 
                 <Grid.Col span={{ base: 12, md: 6 }}>
 
                     <h2>Breakdown</h2>
-
-                    <Paper withBorder p="md" radius="md" h="100%">
-                        <Table data={incomeTableDataProp} striped highlightOnHover verticalSpacing="sm" />
+                    <Paper withBorder>
+                        <Table data={incomeTableDataProp} highlightOnHover verticalSpacing="sm" horizontalSpacing="md" />
                     </Paper>
 
                 </Grid.Col>
@@ -174,29 +194,23 @@ export default function Summary() {
                 <Grid.Col span={{ base: 12, md: 6 }}>
 
                     <h2>Expenses</h2>
-
-                    <Paper withBorder p="md" radius="md" h="100%">
-                        <Box h={200} w={200}>
-                            <PieChart
-                                data={expenseGraphData}
-                                labelsPosition={"outside"}
-                                labelsType={"value"}
-                                h={200}
-                                size={200}
-                                withLabels
-                                withLabelsLine
-                                withTooltip
-                            />
-                        </Box>
-                    </Paper>
+                    <Box h={200} w={200}>
+                        <PieChart
+                            data={expenseGraphData}
+                            labelsPosition={"outside"}
+                            labelsType={"percent"}
+                            size={200}
+                            withLabels
+                            withTooltip
+                        />
+                    </Box>
 
                 </Grid.Col>
                 <Grid.Col span={{ base: 12, md: 6 }}>
 
                     <h2>Breakdown</h2>
-
                     <Paper withBorder p="md" radius="md" h="100%">
-                        <Table data={expenseTableDataProp} striped highlightOnHover verticalSpacing="sm" />
+                        <Table data={expenseTableDataProp} highlightOnHover verticalSpacing="sm" />
                     </Paper>
 
                 </Grid.Col>
