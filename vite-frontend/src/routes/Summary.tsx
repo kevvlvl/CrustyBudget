@@ -1,6 +1,18 @@
 import { PieChart } from '@mantine/charts';
 import '@mantine/charts/styles.css'
-import {Box, Center, Container, Grid, Loader, NativeSelect, Paper, Table, type TableData} from "@mantine/core";
+import {
+    Box,
+    Center,
+    Container,
+    Grid,
+    Group,
+    Loader,
+    NativeSelect,
+    Paper,
+    Table,
+    type TableData,
+    Text
+} from "@mantine/core";
 import {IconClock} from '@tabler/icons-react';
 import {useEffect, useMemo, useState} from "react";
 
@@ -36,6 +48,8 @@ const EXPENSE_COLOR_MAP: Record<string, string> = {
 
 export default function Summary() {
 
+    const [incomeTotal, setIncomeTotal] = useState(0);
+    const [expenseTotal, setExpenseTotal] = useState(0);
     const [frequency, setFrequency] = useState('Monthly');
     const [incomeTableData, setIncomeTableData] = useState<SummaryDataItem[]>([]);
     const [incomeGraphData, setIncomeGraphData] = useState<ChartDataItem[]>([]);
@@ -65,6 +79,7 @@ export default function Summary() {
                 }
 
                 console.log('formattedData = ', formattedChartData);
+                setIncomeTotal(rawData.items.reduce((acc, item) => acc + Number(item.amount), 0))
                 setIncomeTableData(rawData.items);
                 return formattedChartData;
             })
@@ -99,6 +114,7 @@ export default function Summary() {
                 }
 
                 console.log('formattedData = ', formattedChartData);
+                setExpenseTotal(rawData.items.reduce((acc, item) => acc + Number(item.amount), 0));
                 setExpenseTableData(rawData.items);
                 return formattedChartData;
             })
@@ -116,33 +132,33 @@ export default function Summary() {
 
     const incomeTableDataProp: TableData = useMemo(() => {
 
-        const total = incomeTableData.reduce((acc, item) => acc + Number(item.amount), 0);
-
         return {
             head: ['Name', 'Category', 'Amount'],
             body: incomeTableData.map((item) => [
                 item.name,
                 item.category,
-                `$${Number(item.amount).toFixed(2)}`,
+                `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
             ]),
-            foot: ['', 'Total', `$${Number(total).toFixed(2)}`],
+            foot: ['', 'Total', `$${incomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
         }
-    }, [incomeTableData]);
+    }, [incomeTableData, incomeTotal]);
 
     const expenseTableDataProp: TableData = useMemo(() => {
-
-        const total = expenseTableData.reduce((acc, item) => acc + Number(item.amount), 0);
 
         return {
             head: ['Name', 'Category', 'Amount'],
             body: expenseTableData.map((item) => [
                 item.name,
                 item.category,
-                `$${Number(item.amount).toFixed(2)}`,
+                `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
             ]),
-            foot: ['', 'Total', `$${Number(total).toFixed(2)}`],
+            foot: ['', 'Total', `$${expenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
         }
-    }, [expenseTableData]);
+    }, [expenseTableData, expenseTotal]);
+
+    const spendingPower = useMemo(() => {
+        return incomeTotal - expenseTotal
+    }, [incomeTotal, expenseTotal]);
 
     if (loading)
         return <Center h={350}><Loader color="blue" /></Center>;
@@ -153,16 +169,27 @@ export default function Summary() {
     return(
         <Container>
 
-            <NativeSelect
-                w={200}
-                label={"Frequency"}
-                leftSection={<IconClock size={16} />}
-                withAsterisk
-                description={"All amounts will be recalculated for the set Frequency"}
-                data={['Daily', 'Weekly', 'Biweekly', 'Monthly']}
-                value={frequency}
-                onChange={(evt) => setFrequency(evt.currentTarget.value)}
-            />
+            <Grid gutter="md" align="flex-start">
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                    <NativeSelect
+                        w={200}
+                        label={"Frequency"}
+                        leftSection={<IconClock size={16} />}
+                        withAsterisk
+                        description={"All amounts will be recalculated for the set Frequency"}
+                        data={['Daily', 'Weekly', 'Biweekly', 'Monthly']}
+                        value={frequency}
+                        onChange={(evt) => setFrequency(evt.currentTarget.value)}
+                    />
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, md: 6 }}>
+                    <b>Budget</b>
+                    <Group>
+                        <Text c={"green"} fw={700}>Amount:</Text>
+                        <Text>${spendingPower.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+                    </Group>
+                </Grid.Col>
+            </Grid>
 
             <Grid gutter="md" align="flex-start">
                 <Grid.Col span={{ base: 12, md: 6 }}>
