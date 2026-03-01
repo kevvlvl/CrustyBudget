@@ -36,9 +36,11 @@ pub struct ExpenseEntry {
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct CreditCardExpenseEntry {
+    pub created_date: Option<NaiveDate>,
+    pub name: String,
     pub amount: Decimal,
-    pub payment_date: Option<NaiveDate>,
-    pub details: Option<String>,
+    pub due_date: NaiveDate,
+    pub amount_paid: Decimal,
 }
 
 #[derive(Debug)]

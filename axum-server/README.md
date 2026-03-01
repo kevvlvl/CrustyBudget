@@ -28,7 +28,7 @@ curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/jso
 ### Add a credit card payment due
 
 ```
-curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"amount": "1250.74", "payment_date": "2026-03-01", "details": "My Super CreditCard"}'
+curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"name": "viza", "amount": "1250.74", "due_date": "2026-04-01", "amount_paid": "0"}'
 ```
 
 ### Get income aggregated Monthly
