@@ -1,13 +1,13 @@
-use axum::extract::Query;
+use axum::extract::{Path, Query};
 use axum::http::StatusCode;
 use axum::Json;
 use log::info;
 use rust_decimal_macros::dec;
 use serde::{Deserialize};
-use crate::budget::calc::{summarize_calc};
-use crate::budget::db::{get, save, EXPENSE_TABLE};
+use crate::budget::calc::summarize_expense_calc;
+use crate::budget::db::{get, insert, update, EXPENSE_TABLE};
 use crate::money_str;
-use crate::types::budget_structs::{ExpenseEntry, SummaryReport};
+use crate::types::budget_structs::{ExpenseEntry, SummaryExpenseReport};
 use crate::types::enums::Frequency;
 
 #[derive(Deserialize)]
@@ -17,13 +17,26 @@ pub struct ExpenseQuery {
 
 pub async fn add_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
 
-    info!("Received expense payload: {:?}", payload);
+    info!("add_expense - Received expense payload: {:?}", payload);
 
     let amount_str: String = money_str!("CAD", payload.amount);
-    info!("Received expense with amount: {}", amount_str);
+    info!("add_expense - Received expense with amount: {}", amount_str);
 
     let payload_str = serde_json::to_string(&payload).unwrap();
-    save(&payload_str, EXPENSE_TABLE).expect("ERROR: Failed Writing to redb database");
+    insert(&payload_str, EXPENSE_TABLE).expect("add_expense - ERROR: Failed Writing to redb database");
+
+    Ok(Json(payload))
+}
+
+pub async fn update_expense(Path(id): Path<u64>, Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
+
+    info!("update_expense - Received expense payload: {:?}", payload);
+
+    let amount_str: String = money_str!("CAD", payload.amount);
+    info!("update_expense - Received expense with amount: {}", amount_str);
+
+    let payload_str = serde_json::to_string(&payload).unwrap();
+    update(id, &payload_str, EXPENSE_TABLE).expect("update_expense - ERROR: Failed Writing to redb database");
 
     Ok(Json(payload))
 }
@@ -32,17 +45,17 @@ fn get_positive_expense_filter() -> fn(&ExpenseEntry) -> bool {
     |i: &ExpenseEntry| i.amount.gt(&dec!(0))
 }
 
-pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<SummaryReport>, StatusCode> {
+pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<SummaryExpenseReport>, StatusCode> {
 
     let expense_query: ExpenseQuery = expense_query.0;
 
-    info!("Get expense for frequency: {:?}", expense_query.frequency);
+    info!("get_expense - for frequency: {:?}", expense_query.frequency);
 
     let items_found = get::<_, ExpenseEntry>(get_positive_expense_filter(), EXPENSE_TABLE)
         .map_err(|e| e.to_string());
 
-    info!("Get expense for items: {:?}", items_found);
+    info!("get_expense - Found expense items: {:?}", items_found);
 
-    let res = summarize_calc(&expense_query.frequency, items_found.unwrap());
+    let res = summarize_expense_calc(&expense_query.frequency, items_found.unwrap());
     Ok(Json(res))
 }

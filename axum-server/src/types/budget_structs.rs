@@ -3,12 +3,12 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use crate::types::enums::{ExpenseCategory, Frequency};
 
-pub trait FinancialEntry {
-    fn get_amount(&self) -> Decimal;
-    fn get_name(&self) -> String;
-    fn get_frequency(&self) -> Frequency;
-
-    fn get_category(&self) -> String;
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub struct Identifier<T> {
+    pub id: u64,
+    pub value: T,
 }
 
 #[derive(Debug)]
@@ -46,58 +46,57 @@ pub struct CreditCardExpenseEntry {
 #[derive(Debug)]
 #[derive(Serialize)]
 #[derive(Deserialize)]
-pub struct SummaryReport {
+pub struct SummaryIncomeReport {
     pub frequency: Frequency,
-    pub items: Vec<SummaryReportItem>,
+    pub items: Vec<SummaryIncomeReportItem>,
 }
 
 #[derive(Debug)]
 #[derive(Serialize)]
 #[derive(Deserialize)]
-pub struct SummaryReportItem {
+pub struct SummaryIncomeReportItem {
+    pub id: u64,
     pub amount: Decimal,
-    pub category: String,
-    pub name: String,
+    pub details: IncomeEntry,
 }
 
-impl FinancialEntry for IncomeEntry {
-    fn get_amount(&self) -> Decimal {
-        self.amount
-    }
-
-    fn get_name(&self) -> String {
-        self.source.clone().unwrap()
-    }
-
-    fn get_frequency(&self) -> Frequency {
-        self.frequency.clone()
-    }
-
-    fn get_category(&self) -> String {
-        self.source.clone().unwrap()
-    }
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub struct SummaryExpenseReport {
+    pub frequency: Frequency,
+    pub items: Vec<SummaryExpenseReportItem>,
 }
 
-impl FinancialEntry for ExpenseEntry {
-    fn get_amount(&self) -> Decimal {
-        self.amount
-    }
-
-    fn get_name(&self) -> String {
-        self.destination.clone().unwrap()
-    }
-
-    fn get_frequency(&self) -> Frequency {
-        self.frequency.clone()
-    }
-
-    fn get_category(&self) -> String {
-        self.destination.clone().unwrap()
-    }
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(Deserialize)]
+pub struct SummaryExpenseReportItem {
+    pub id: u64,
+    pub amount: Decimal,
+    pub details: ExpenseEntry,
 }
 
-impl PartialEq for SummaryReportItem {
+impl PartialEq for SummaryIncomeReportItem {
     fn eq(&self, other: &Self) -> bool {
-        self.amount.eq(&other.amount) && self.name == other.name
+        self.amount.eq(&other.amount) && self.details == other.details
+    }
+}
+
+impl PartialEq for SummaryExpenseReportItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.amount.eq(&other.amount) && self.details == other.details
+    }
+}
+
+impl PartialEq for IncomeEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.source == other.source && self.amount.eq(&other.amount) && self.frequency == other.frequency && self.details == other.details
+    }
+}
+
+impl PartialEq for ExpenseEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.destination == other.destination && self.amount.eq(&other.amount) && self.frequency == other.frequency && self.details == other.details
     }
 }

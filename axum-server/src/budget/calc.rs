@@ -2,7 +2,7 @@ use std::ops::{Div, Mul};
 use log::info;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use crate::types::budget_structs::{FinancialEntry, SummaryReport, SummaryReportItem};
+use crate::types::budget_structs::{SummaryIncomeReport, SummaryIncomeReportItem, SummaryExpenseReport, SummaryExpenseReportItem, IncomeEntry, ExpenseEntry, Identifier};
 use crate::types::enums::Frequency;
 
 /**
@@ -14,22 +14,41 @@ Return a dollar amount with the specified currency, with two decimals
     }
 }
 
-pub fn summarize_calc<T: FinancialEntry>(frequency: &Frequency, entries: Vec<T>) -> SummaryReport {
+pub fn summarize_income_calc(frequency: &Frequency, entries: Vec<Identifier<IncomeEntry>>) -> SummaryIncomeReport {
 
-    let mut summary_income: SummaryReport = SummaryReport {
+    let mut summary_income: SummaryIncomeReport = SummaryIncomeReport {
         frequency: frequency.clone(),
         items: vec![],
     };
 
     for entry in entries {
-        info!("Current entry: name {} - category {} - frequency {} - amount {} ",
-            entry.get_name(),
-            entry.get_category(),
-            entry.get_frequency(),
-            entry.get_amount());
+        info!("summarize_income_calc - Current {} amount {}", entry.value.source.clone().unwrap_or("UNSET".to_string()), entry.value.amount);
+        let calculated_amount: Decimal = get_frequency_amount(frequency, &entry.value.frequency, entry.value.amount);
+        summary_income.items.push(SummaryIncomeReportItem {
+            id: entry.id,
+            amount: calculated_amount,
+            details: entry.value,
+        })
+    }
 
-        summary_income.items.push(get_frequency_amount(frequency, &entry.get_name(), &entry.get_category(), &entry.get_frequency(), entry.get_amount()));
+    summary_income
+}
 
+pub fn summarize_expense_calc(frequency: &Frequency, entries: Vec<Identifier<ExpenseEntry>>) -> SummaryExpenseReport {
+
+    let mut summary_income: SummaryExpenseReport = SummaryExpenseReport {
+        frequency: frequency.clone(),
+        items: vec![],
+    };
+
+    for entry in entries {
+        info!("summarize_expense_calc - Current {} amount {}", entry.value.destination.clone().unwrap_or("UNSET".to_string()), entry.value.amount);
+        let calculated_amount: Decimal = get_frequency_amount(frequency, &entry.value.frequency, entry.value.amount);
+        summary_income.items.push(SummaryExpenseReportItem {
+            id: entry.id,
+            amount: calculated_amount,
+            details: entry.value,
+        })
     }
 
     summary_income
@@ -37,10 +56,10 @@ pub fn summarize_calc<T: FinancialEntry>(frequency: &Frequency, entries: Vec<T>)
 
 /**
 Return the amount for the desired target frequency.
-ASSUMPTIONS FOR SIMPLIFICATION: 1 month contains 31 days, biweekly means twice a month
+ASSUMPTIONS FOR SIMPLIFICATFION: 1 month contains 31 days, biweekly means twice a month
 Personal project disclaimer: This is not exactly accurate okay!
 **/
-fn get_frequency_amount(target_frequency: &Frequency, name: &str, category: &str, amount_frequency: &Frequency, amount: Decimal) -> SummaryReportItem {
+fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequency, amount: Decimal) -> Decimal {
 
     let res: Decimal;
     match target_frequency {
@@ -110,11 +129,8 @@ fn get_frequency_amount(target_frequency: &Frequency, name: &str, category: &str
         }
     }
 
-    SummaryReportItem {
-        name: name.to_string(),
-        category: category.to_string(),
-        amount: res.round_dp(4)
-    }
+    info!("get_frequency_amount - Amount (original frequency {}) recalculated for frequency {}: {}", amount_frequency, target_frequency, res);
+    res
 }
 
 #[cfg(test)]
@@ -125,207 +141,111 @@ mod tests {
     #[test]
     fn test_get_frequency_amount_from_biweekly_to_daily() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(200)
-        };
-
-        let res = get_frequency_amount(&Frequency::Daily, &expected_item.name, &expected_item.category, &Frequency::Biweekly, dec!(2800));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Biweekly, dec!(2800));
+        assert_eq!(res, dec!(200));
     }
 
     #[test]
     fn test_get_frequency_amount_from_biweekly_to_weekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(166.50)
-        };
-
-        let res = get_frequency_amount(&Frequency::Weekly, &expected_item.name, &expected_item.category, &Frequency::Biweekly, dec!(333));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Biweekly, dec!(333));
+        assert_eq!(res, dec!(166.50));
     }
 
     #[test]
     fn test_get_frequency_amount_from_biweekly_to_biweekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(333)
-        };
-
-        let res = get_frequency_amount(&Frequency::Biweekly, &expected_item.name, &expected_item.category, &Frequency::Biweekly, dec!(333));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Biweekly, dec!(333));
+        assert_eq!(res, dec!(333));
     }
 
     #[test]
     fn test_get_frequency_amount_from_biweekly_to_monthly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(1000)
-        };
-
-        let res = get_frequency_amount(&Frequency::Monthly, &expected_item.name, &expected_item.category, &Frequency::Biweekly, dec!(500));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Biweekly, dec!(500));
+        assert_eq!(res, dec!(1000));
     }
 
     #[test]
     fn test_get_frequency_amount_from_weekly_to_daily() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(200)
-        };
-
-        let res = get_frequency_amount(&Frequency::Daily, &expected_item.name, &expected_item.category, &Frequency::Weekly, dec!(1400));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Weekly, dec!(1400));
+        assert_eq!(res, dec!(200));
     }
 
     #[test]
     fn test_get_frequency_amount_from_weekly_to_weekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(222)
-        };
-
-        let res = get_frequency_amount(&Frequency::Weekly, &expected_item.name, &expected_item.category, &Frequency::Weekly, dec!(222));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Weekly, dec!(222));
+        assert_eq!(res, dec!(222));
     }
 
     #[test]
     fn test_get_frequency_amount_from_weekly_to_biweekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(444)
-        };
-
-        let res = get_frequency_amount(&Frequency::Biweekly, &expected_item.name, &expected_item.category, &Frequency::Weekly, dec!(222));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Weekly, dec!(222));
+        assert_eq!(res, dec!(444));
     }
 
     #[test]
     fn test_get_frequency_amount_from_weekly_to_monthly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(888)
-        };
-
-        let res = get_frequency_amount(&Frequency::Monthly, &expected_item.name, &expected_item.category, &Frequency::Weekly, dec!(222));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Weekly, dec!(222));
+        assert_eq!(res, dec!(888));
     }
 
     #[test]
     fn test_get_frequency_amount_from_daily_to_daily() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(50)
-        };
-
-        let res = get_frequency_amount(&Frequency::Daily, &expected_item.name, &expected_item.category, &Frequency::Daily, dec!(50));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Daily, dec!(50));
+        assert_eq!(res, dec!(50));
     }
 
     #[test]
     fn test_get_frequency_amount_from_daily_to_weekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(35)
-        };
-
-        let res = get_frequency_amount(&Frequency::Weekly, &expected_item.name, &expected_item.category, &Frequency::Daily, dec!(5));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Daily, dec!(5));
+        assert_eq!(res, dec!(35));
     }
 
     #[test]
     fn test_get_frequency_amount_from_daily_to_biweekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(70)
-        };
-
-        let res = get_frequency_amount(&Frequency::Biweekly, &expected_item.name, &expected_item.category, &Frequency::Daily, dec!(5));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Daily, dec!(5));
+        assert_eq!(res, dec!(70));
     }
     #[test]
     fn test_get_frequency_amount_from_daily_to_monthly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(155)
-        };
-
-        let res = get_frequency_amount(&Frequency::Monthly, &expected_item.name, &expected_item.category, &Frequency::Daily, dec!(5));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Daily, dec!(5));
+        assert_eq!(res, dec!(155));
     }
 
     #[test]
     fn test_get_frequency_amount_from_monthly_to_daily() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(80.6452)
-        };
-
-        let res = get_frequency_amount(&Frequency::Daily, &expected_item.name, &expected_item.category, &Frequency::Monthly, dec!(2500));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Daily, &Frequency::Monthly, dec!(2500));
+        assert_eq!(res, dec!(80.64516129032258064516129032));
     }
 
     #[test]
     fn test_get_frequency_amount_from_monthly_to_weekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(625)
-        };
-
-        let res = get_frequency_amount(&Frequency::Weekly, &expected_item.name, &expected_item.category, &Frequency::Monthly, dec!(2500));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Weekly, &Frequency::Monthly, dec!(2500));
+        assert_eq!(res, dec!(625));
     }
 
     #[test]
     fn test_get_frequency_amount_from_monthly_to_biweekly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(1250)
-        };
-
-        let res = get_frequency_amount(&Frequency::Biweekly, &expected_item.name, &expected_item.category, &Frequency::Monthly, dec!(2500));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Biweekly, &Frequency::Monthly, dec!(2500));
+        assert_eq!(res, dec!(1250));
     }
 
     #[test]
     fn test_get_frequency_amount_from_monthly_to_monthly() {
 
-        let expected_item = SummaryReportItem {
-            name: "test-item".to_string(),
-            category: "Utilities".to_string(),
-            amount: dec!(1234)
-        };
-
-        let res = get_frequency_amount(&Frequency::Monthly, &expected_item.name, &expected_item.category, &Frequency::Monthly, dec!(1234));
-        assert_eq!(res, expected_item);
+        let res = get_frequency_amount(&Frequency::Monthly, &Frequency::Monthly, dec!(1234));
+        assert_eq!(res, dec!(1234));
     }
 }

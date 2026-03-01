@@ -23,6 +23,7 @@ pub enum ExpenseCategory {
     Food,
     Housing,
     Transportation,
+    OnlineServices,
     Utilities,
     Misc
 }

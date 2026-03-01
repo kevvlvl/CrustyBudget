@@ -1,6 +1,7 @@
 use log::{ info};
 use redb::{Database, DatabaseError, Error, ReadableDatabase, ReadableTable, TableDefinition, TableHandle, WriteTransaction};
 use serde::de::DeserializeOwned;
+use crate::types::budget_structs::Identifier;
 
 const DB_NAME: &str = "crusty.redb";
 const ID_SEQ: TableDefinition<&str, u64> = TableDefinition::new("id_seq");
@@ -23,7 +24,7 @@ fn get_db() -> redb::Result<Database, DatabaseError> {
     Database::create(DB_NAME)
 }
 
-pub fn save(payload: &str, table_definition: TableDefinition<u64, &str>) -> Result<(), Error> {
+pub fn insert(payload: &str, table_definition: TableDefinition<u64, &str>) -> Result<(), Error> {
 
     let db = get_db()?;
     let write_txn = db.begin_write()?;
@@ -39,7 +40,19 @@ pub fn save(payload: &str, table_definition: TableDefinition<u64, &str>) -> Resu
     Ok(())
 }
 
-pub fn get<F, T>(value_filter: F, table_definition: TableDefinition<u64, &str>) -> Result<Vec<T>, String>
+pub fn update(id: u64, payload: &str, table_definition: TableDefinition<u64, &str>) -> Result<(), redb::Error> {
+
+    let db = get_db()?;
+    let write_txn = db.begin_write()?;
+    {
+        let mut table = write_txn.open_table(table_definition)?;
+        table.insert(id, payload)?;
+    }
+    write_txn.commit()?;
+    Ok(())
+}
+
+pub fn get<F, T>(value_filter: F, table_definition: TableDefinition<u64, &str>) -> Result<Vec<Identifier<T>>, String>
 where
     F: Fn(&T) -> bool,
     T: DeserializeOwned,
@@ -51,14 +64,18 @@ where
     let mut results = Vec::new();
     for item in table.iter().map_err(|e| e.to_string())? {
 
-        let(_key_access, value_access) = item.map_err(|e| format!("Storage error: {}", e))?;
+        let(key_access, value_access) = item.map_err(|e| format!("get - Storage error: {}", e))?;
+        let id = key_access.value();
         let json_str = value_access.value();
 
         let item_data : T = serde_json::from_str(json_str)
             .map_err(|e| e.to_string())?;
 
         if value_filter(&item_data) {
-            results.push(item_data);
+            results.push(Identifier {
+                id,
+                value: item_data,
+            });
         }
     }
 
