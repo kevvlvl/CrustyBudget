@@ -17,18 +17,20 @@ RUST_LOG=info cargo run
 
 ### Add an income
 ```
-curl -X POST localhost:3000/api/budget/income -H 'Content-Type: application/json' -d '{"source": "Work", "amount": "1500", "frequency": "Biweekly"}'
+curl -X POST localhost:3000/api/budget/income -H 'Content-Type: application/json' -d '{"name": "Work", "income_category": "Salary", "amount": "1500", "frequency": "Biweekly"}'
+curl -X POST localhost:3000/api/budget/income -H 'Content-Type: application/json' -d '{"name": "Bonus", "income_category": "Salary", "amount": "1255", "frequency": "Monthly"}'
 ```
 
 ### Add an expense
 ```
-curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/json' -d '{"destination": "Cellphone Service", "amount": "45", "frequency": "Monthly"}'
+curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/json' -d '{"name": "Cellphone Service", "expense_category": "OnlineServices", "amount": "35", "frequency": "Monthly"}'
+curl -X POST localhost:3000/api/budget/expense -H 'Content-Type: application/json' -d '{"name": "MetFlix Service", "expense_category": "OnlineServices", "amount": "12.99", "frequency": "Monthly"}'
 ```
 
 ### Add a credit card payment due
 
 ```
-curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"name": "viza", "amount": "1250.74", "due_date": "2026-04-01", "amount_paid": "0"}'
+curl -X POST localhost:3000/api/budget/cc -H 'Content-Type: application/json' -d '{"name": "viza", "amount": "1250.74", "due_date": "2026-04-01", "frequency: "Once"}'
 ```
 
 ### Get income aggregated Monthly

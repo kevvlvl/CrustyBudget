@@ -6,14 +6,14 @@ use log::info;
 use serde::Deserialize;
 use crate::budget::db::{get, insert, update, CC_TABLE};
 use crate::money_str;
-use crate::types::budget_structs::{CreditCardExpenseEntry, Identifier};
+use crate::types::budget_structs::{ItemDetails, Identifier};
 
 #[derive(Deserialize)]
 pub struct CreditCardQuery {
     from_date: NaiveDate
 }
 
-pub async fn add_cc(Json(payload): Json<CreditCardExpenseEntry>) -> Result<Json<CreditCardExpenseEntry>, StatusCode> {
+pub async fn add_cc(Json(payload): Json<ItemDetails>) -> Result<Json<ItemDetails>, StatusCode> {
 
     info!("add_cc - Received cc payload: {:?}", payload);
 
@@ -27,7 +27,7 @@ pub async fn add_cc(Json(payload): Json<CreditCardExpenseEntry>) -> Result<Json<
     Ok(Json(payload))
 }
 
-pub async fn update_cc(Path(id): Path<u64>, Json(payload): Json<CreditCardExpenseEntry>) -> Result<Json<CreditCardExpenseEntry>, StatusCode> {
+pub async fn update_cc(Path(id): Path<u64>, Json(payload): Json<ItemDetails>) -> Result<Json<ItemDetails>, StatusCode> {
 
     info!("update_cc - Received cc payload: {:?}", payload);
 
@@ -41,17 +41,17 @@ pub async fn update_cc(Path(id): Path<u64>, Json(payload): Json<CreditCardExpens
     Ok(Json(payload))
 }
 
-fn get_items_from_date_filter(from_date: &NaiveDate) -> impl Fn(&CreditCardExpenseEntry) -> bool {
-    move |i: &CreditCardExpenseEntry| i.created_date.unwrap_or(NaiveDate::MIN).gt(from_date)
+fn get_items_due_after_date_filter(from_date: &NaiveDate) -> impl Fn(&ItemDetails) -> bool {
+    move |i: &ItemDetails| i.expense_due_date.unwrap_or(NaiveDate::MIN).gt(from_date)
 }
 
-pub async fn get_credits(credit_card_query: Query<CreditCardQuery>) -> Result<Json<Vec<Identifier<CreditCardExpenseEntry>>>, StatusCode> {
+pub async fn get_credits(credit_card_query: Query<CreditCardQuery>) -> Result<Json<Vec<Identifier>>, StatusCode> {
 
     let credit_card_query: CreditCardQuery = credit_card_query.0;
 
     info!("get_credits - Get expense for frequency: {:?}", credit_card_query.from_date);
 
-    let items_found = get::<_, CreditCardExpenseEntry>(get_items_from_date_filter(&credit_card_query.from_date), CC_TABLE)
+    let items_found = get::<_>(get_items_due_after_date_filter(&credit_card_query.from_date), CC_TABLE)
         .map_err(|e| e.to_string()).unwrap();
 
     info!("get_credits - Found credit card items: {:?}", items_found);

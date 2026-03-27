@@ -4,10 +4,10 @@ use axum::Json;
 use log::info;
 use rust_decimal_macros::dec;
 use serde::{Deserialize};
-use crate::budget::calc::summarize_expense_calc;
+use crate::budget::calc::summarize_calc;
 use crate::budget::db::{get, insert, update, EXPENSE_TABLE};
 use crate::money_str;
-use crate::types::budget_structs::{ExpenseEntry, SummaryExpenseReport};
+use crate::types::budget_structs::{ItemDetails, Report};
 use crate::types::enums::Frequency;
 
 #[derive(Deserialize)]
@@ -15,7 +15,7 @@ pub struct ExpenseQuery {
     frequency: Frequency
 }
 
-pub async fn add_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
+pub async fn add_expense(Json(payload): Json<ItemDetails>) -> Result<Json<ItemDetails>, StatusCode> {
 
     info!("add_expense - Received expense payload: {:?}", payload);
 
@@ -28,7 +28,7 @@ pub async fn add_expense(Json(payload): Json<ExpenseEntry>) -> Result<Json<Expen
     Ok(Json(payload))
 }
 
-pub async fn update_expense(Path(id): Path<u64>, Json(payload): Json<ExpenseEntry>) -> Result<Json<ExpenseEntry>, StatusCode> {
+pub async fn update_expense(Path(id): Path<u64>, Json(payload): Json<ItemDetails>) -> Result<Json<ItemDetails>, StatusCode> {
 
     info!("update_expense - Received expense payload: {:?}", payload);
 
@@ -41,21 +41,21 @@ pub async fn update_expense(Path(id): Path<u64>, Json(payload): Json<ExpenseEntr
     Ok(Json(payload))
 }
 
-fn get_positive_expense_filter() -> fn(&ExpenseEntry) -> bool {
-    |i: &ExpenseEntry| i.amount.gt(&dec!(0))
+fn get_positive_expense_filter() -> fn(&ItemDetails) -> bool {
+    |i: &ItemDetails| i.amount.gt(&dec!(0))
 }
 
-pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<SummaryExpenseReport>, StatusCode> {
+pub async fn get_expense(expense_query: Query<ExpenseQuery>) -> Result<Json<Report>, StatusCode> {
 
     let expense_query: ExpenseQuery = expense_query.0;
 
     info!("get_expense - for frequency: {:?}", expense_query.frequency);
 
-    let items_found = get::<_, ExpenseEntry>(get_positive_expense_filter(), EXPENSE_TABLE)
+    let items_found = get::<_>(get_positive_expense_filter(), EXPENSE_TABLE)
         .map_err(|e| e.to_string());
 
     info!("get_expense - Found expense items: {:?}", items_found);
 
-    let res = summarize_expense_calc(&expense_query.frequency, items_found.unwrap());
+    let res = summarize_calc(&expense_query.frequency, items_found.unwrap());
     Ok(Json(res))
 }

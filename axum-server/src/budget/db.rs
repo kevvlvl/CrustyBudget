@@ -1,7 +1,6 @@
 use log::{ info};
 use redb::{Database, DatabaseError, Error, ReadableDatabase, ReadableTable, TableDefinition, TableHandle, WriteTransaction};
-use serde::de::DeserializeOwned;
-use crate::types::budget_structs::Identifier;
+use crate::types::budget_structs::{Identifier, ItemDetails};
 
 const DB_NAME: &str = "crusty.redb";
 const ID_SEQ: TableDefinition<&str, u64> = TableDefinition::new("id_seq");
@@ -52,10 +51,9 @@ pub fn update(id: u64, payload: &str, table_definition: TableDefinition<u64, &st
     Ok(())
 }
 
-pub fn get<F, T>(value_filter: F, table_definition: TableDefinition<u64, &str>) -> Result<Vec<Identifier<T>>, String>
+pub fn get<F>(value_filter: F, table_definition: TableDefinition<u64, &str>) -> Result<Vec<Identifier>, String>
 where
-    F: Fn(&T) -> bool,
-    T: DeserializeOwned,
+    F: Fn(&ItemDetails) -> bool
 {
     let db = get_db().map_err(|e| e.to_string())?;
     let read_txn = db.begin_read().map_err(|e| e.to_string())?;
@@ -68,13 +66,13 @@ where
         let id = key_access.value();
         let json_str = value_access.value();
 
-        let item_data : T = serde_json::from_str(json_str)
+        let item_data : ItemDetails = serde_json::from_str(json_str)
             .map_err(|e| e.to_string())?;
 
         if value_filter(&item_data) {
             results.push(Identifier {
                 id,
-                value: item_data,
+                item_details: item_data,
             });
         }
     }

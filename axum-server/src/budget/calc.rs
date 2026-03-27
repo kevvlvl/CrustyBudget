@@ -2,7 +2,7 @@ use std::ops::{Div, Mul};
 use log::info;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use crate::types::budget_structs::{SummaryIncomeReport, SummaryIncomeReportItem, SummaryExpenseReport, SummaryExpenseReportItem, IncomeEntry, ExpenseEntry, Identifier};
+use crate::types::budget_structs::{Report, Identifier, AggregatedItemDetails};
 use crate::types::enums::Frequency;
 
 /**
@@ -14,44 +14,23 @@ Return a dollar amount with the specified currency, with two decimals
     }
 }
 
-pub fn summarize_income_calc(frequency: &Frequency, entries: Vec<Identifier<IncomeEntry>>) -> SummaryIncomeReport {
+pub fn summarize_calc(frequency: &Frequency, entries: Vec<Identifier>) -> Report {
 
-    let mut summary_income: SummaryIncomeReport = SummaryIncomeReport {
-        frequency: frequency.clone(),
+    let mut summary: Report = Report {
         items: vec![],
     };
 
     for entry in entries {
-        info!("summarize_income_calc - Current {} amount {}", entry.value.source.clone().unwrap_or("UNSET".to_string()), entry.value.amount);
-        let calculated_amount: Decimal = get_frequency_amount(frequency, &entry.value.frequency, entry.value.amount);
-        summary_income.items.push(SummaryIncomeReportItem {
-            id: entry.id,
-            amount: calculated_amount,
-            details: entry.value,
+        info!("summarize_income_calc - Current {} amount {}", entry.item_details.name, entry.item_details.amount);
+        let calculated_amount: Decimal = get_frequency_amount(frequency, &entry.item_details.frequency, entry.item_details.amount);
+        summary.items.push(AggregatedItemDetails {
+            calculated_amount,
+            frequency: frequency.clone(),
+            item: entry,
         })
     }
 
-    summary_income
-}
-
-pub fn summarize_expense_calc(frequency: &Frequency, entries: Vec<Identifier<ExpenseEntry>>) -> SummaryExpenseReport {
-
-    let mut summary_income: SummaryExpenseReport = SummaryExpenseReport {
-        frequency: frequency.clone(),
-        items: vec![],
-    };
-
-    for entry in entries {
-        info!("summarize_expense_calc - Current {} amount {}", entry.value.destination.clone().unwrap_or("UNSET".to_string()), entry.value.amount);
-        let calculated_amount: Decimal = get_frequency_amount(frequency, &entry.value.frequency, entry.value.amount);
-        summary_income.items.push(SummaryExpenseReportItem {
-            id: entry.id,
-            amount: calculated_amount,
-            details: entry.value,
-        })
-    }
-
-    summary_income
+    summary
 }
 
 /**
@@ -77,6 +56,9 @@ fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequen
                 Frequency::Biweekly => {
                     res = amount.mul(dec!(2))
                 }
+                Frequency::Once => {
+                    res = amount
+                }
             }
         }
         Frequency::Daily => {
@@ -92,6 +74,9 @@ fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequen
                 }
                 Frequency::Biweekly => {
                     res = amount.div(dec!(14))
+                }
+                Frequency::Once => {
+                    res = amount
                 }
             }
         }
@@ -109,6 +94,9 @@ fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequen
                 Frequency::Biweekly => {
                     res = amount.div(dec!(2));
                 }
+                Frequency::Once => {
+                    res = amount
+                }
             }
         }
         Frequency::Biweekly => {
@@ -125,7 +113,13 @@ fn get_frequency_amount(target_frequency: &Frequency, amount_frequency: &Frequen
                 Frequency::Biweekly => {
                     res = amount
                 }
+                Frequency::Once => {
+                    res = amount
+                }
             }
+        }
+        Frequency::Once => {
+            res = amount
         }
     }
 

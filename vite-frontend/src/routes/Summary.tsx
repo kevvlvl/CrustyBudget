@@ -16,15 +16,28 @@ import {
 import {IconClock} from '@tabler/icons-react';
 import {useEffect, useMemo, useState} from "react";
 
-interface SummaryData {
-    frequency: string;
-    items: SummaryDataItem[];
+interface Report {
+    items: AggregatedItemDetails[];
 }
 
-interface SummaryDataItem {
-    amount: number;
-    category: string,
-    name: string,
+interface AggregatedItemDetails {
+    calculated_amount: number,
+    frequency: string,
+    item: Identifier,
+}
+
+interface Identifier {
+    id: number,
+    item_details: ItemDetails,
+}
+
+interface ItemDetails {
+    amount: number,
+    expense_category: string,
+    expense_due_date: Date,
+    frequency: string,
+    income_category: string,
+    name: string
 }
 
 interface ChartDataItem {
@@ -42,7 +55,7 @@ const INCOME_COLOR_MAP: Record<string, string> = {
 const EXPENSE_COLOR_MAP: Record<string, string> = {
     Utilities: 'red.3',
     Electricity: 'blue.3',
-    Services: 'green.5',
+    OnlineServices: 'green.5',
     Other: 'cyan.5',
 };
 
@@ -51,9 +64,9 @@ export default function Summary() {
     const [incomeTotal, setIncomeTotal] = useState(0);
     const [expenseTotal, setExpenseTotal] = useState(0);
     const [frequency, setFrequency] = useState('Monthly');
-    const [incomeTableData, setIncomeTableData] = useState<SummaryDataItem[]>([]);
+    const [incomeTableData, setIncomeTableData] = useState<AggregatedItemDetails[]>([]);
     const [incomeGraphData, setIncomeGraphData] = useState<ChartDataItem[]>([]);
-    const [expenseTableData, setExpenseTableData] = useState<SummaryDataItem[]>([]);
+    const [expenseTableData, setExpenseTableData] = useState<AggregatedItemDetails[]>([]);
     const [expenseGraphData, setExpenseGraphData] = useState<ChartDataItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -63,23 +76,22 @@ export default function Summary() {
             .then(res => res.json())
             .then(res => {
 
-                const rawData: SummaryData = res;
-
+                const rawData: Report = res;
                 console.log('rawData = ', rawData);
 
                 const formattedChartData: ChartDataItem[] = [];
 
                 for(let i = 0; i < rawData.items.length; i++) {
                     formattedChartData.push({
-                        name: rawData.items[i].category,
-                        value: Number(rawData.items[i].amount),
+                        name: rawData.items[i].item.item_details.name,
+                        value: Number(rawData.items[i].calculated_amount),
                         // Fallback to gray if category isn't in our map
-                        color: INCOME_COLOR_MAP[rawData.items[i].category] || 'gray.4',
+                        color: INCOME_COLOR_MAP[rawData.items[i].item.item_details.income_category] || 'gray.4',
                     });
                 }
 
                 console.log('formattedData = ', formattedChartData);
-                setIncomeTotal(rawData.items.reduce((acc, item) => acc + Number(item.amount), 0))
+                setIncomeTotal(rawData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0))
                 setIncomeTableData(rawData.items);
                 return formattedChartData;
             })
@@ -98,7 +110,7 @@ export default function Summary() {
             .then(res => res.json())
             .then(res => {
 
-                const rawData: SummaryData = res;
+                const rawData: Report = res;
 
                 console.log('rawData = ', rawData);
 
@@ -106,15 +118,15 @@ export default function Summary() {
 
                 for(let i = 0; i < rawData.items.length; i++) {
                     formattedChartData.push({
-                        name: rawData.items[i].category,
-                        value: Number(rawData.items[i].amount),
+                        name: rawData.items[i].item.item_details.name,
+                        value: Number(rawData.items[i].calculated_amount),
                         // Fallback to gray if category isn't in our map
-                        color: EXPENSE_COLOR_MAP[rawData.items[i].category] || 'gray.4',
+                        color: EXPENSE_COLOR_MAP[rawData.items[i].item.item_details.expense_category] || 'gray.4',
                     });
                 }
 
                 console.log('formattedData = ', formattedChartData);
-                setExpenseTotal(rawData.items.reduce((acc, item) => acc + Number(item.amount), 0));
+                setExpenseTotal(rawData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0));
                 setExpenseTableData(rawData.items);
                 return formattedChartData;
             })
@@ -135,9 +147,9 @@ export default function Summary() {
         return {
             head: ['Name', 'Category', 'Amount'],
             body: incomeTableData.map((item) => [
-                item.name,
-                item.category,
-                `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                item.item.item_details.name,
+                item.item.item_details.income_category,
+                `$${item.calculated_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
             ]),
             foot: ['', 'Total', `$${incomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
         }
@@ -148,9 +160,9 @@ export default function Summary() {
         return {
             head: ['Name', 'Category', 'Amount'],
             body: expenseTableData.map((item) => [
-                item.name,
-                item.category,
-                `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                item.item.item_details.name,
+                item.item.item_details.expense_category,
+                `$${item.calculated_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
             ]),
             foot: ['', 'Total', `$${expenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
         }
