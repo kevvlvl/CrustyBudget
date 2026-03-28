@@ -13,7 +13,7 @@ export function MainLayout() {
             <AppShell.Header
                 p={"md"}
                 withBorder={false}>
-                <Group>
+
 
                     <Tabs value={activeTab} onChange={(value) => navigate(value === 'home' ? '/' : `/${value}`)}>
                         <Tabs.List>
@@ -22,7 +22,7 @@ export function MainLayout() {
                             <Tabs.Tab value={"creditdetails"}>Credit Details</Tabs.Tab>
                         </Tabs.List>
                     </Tabs>
-                </Group>
+
             </AppShell.Header>
 
             <AppShell.Main>

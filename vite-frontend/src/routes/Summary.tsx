@@ -1,14 +1,11 @@
 import { PieChart } from '@mantine/charts';
 import '@mantine/charts/styles.css'
 import {
-    Box,
-    Center,
     Container,
     Grid,
     Group,
-    Loader,
     NativeSelect,
-    Paper,
+    Paper, Stack,
     Table,
     type TableData,
     Text
@@ -46,17 +43,13 @@ interface ChartDataItem {
     color: string;
 }
 
-const INCOME_COLOR_MAP: Record<string, string> = {
+const PIE_CHAT_COLOR_MAP: Record<string, string> = {
     Salary: 'orange.6',
     Investments: 'indigo.7',
-    Other: 'cyan.5',
-};
-
-const EXPENSE_COLOR_MAP: Record<string, string> = {
     Utilities: 'red.3',
     Electricity: 'blue.3',
     OnlineServices: 'green.5',
-    Other: 'cyan.5',
+    Other: 'gray.5',
 };
 
 export default function Summary() {
@@ -65,87 +58,57 @@ export default function Summary() {
     const [expenseTotal, setExpenseTotal] = useState(0);
     const [frequency, setFrequency] = useState('Monthly');
     const [incomeTableData, setIncomeTableData] = useState<AggregatedItemDetails[]>([]);
-    const [incomeGraphData, setIncomeGraphData] = useState<ChartDataItem[]>([]);
+    const [graphData, setGraphData] = useState<ChartDataItem[]>([]);
     const [expenseTableData, setExpenseTableData] = useState<AggregatedItemDetails[]>([]);
-    const [expenseGraphData, setExpenseGraphData] = useState<ChartDataItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch(`http://localhost:3000/api/budget/income?frequency=${frequency}`)
-            .then(res => res.json())
-            .then(res => {
 
-                const rawData: Report = res;
-                console.log('rawData = ', rawData);
+        const fetchData = async() => {
 
-                const formattedChartData: ChartDataItem[] = [];
+            const incomesResponse = await fetch(`http://localhost:3000/api/budget/income?frequency=${frequency}`);
+            const incomesData: Report = await incomesResponse.json();
 
-                for(let i = 0; i < rawData.items.length; i++) {
-                    formattedChartData.push({
-                        name: rawData.items[i].item.item_details.name,
-                        value: Number(rawData.items[i].calculated_amount),
-                        // Fallback to gray if category isn't in our map
-                        color: INCOME_COLOR_MAP[rawData.items[i].item.item_details.income_category] || 'gray.4',
-                    });
-                }
+            console.log('incomesData = ', incomesData);
 
-                console.log('formattedData = ', formattedChartData);
-                setIncomeTotal(rawData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0))
-                setIncomeTableData(rawData.items);
-                return formattedChartData;
-            })
-            .then(result => {
-                setIncomeGraphData(result);
-            })
-            .catch(error => {
-                console.error("Failed fetching: ", error);
-                setError(error);
-            })
-            .finally(() => {
-                setLoading(false);
-            })
+            const expensesResponse = await fetch(`http://localhost:3000/api/budget/expense?frequency=${frequency}`);
+            const expensesData: Report = await expensesResponse.json();
 
-        fetch(`http://localhost:3000/api/budget/expense?frequency=${frequency}`)
-            .then(res => res.json())
-            .then(res => {
+            console.log('expensesData = ', expensesData);
 
-                const rawData: Report = res;
+            const formattedChartData: ChartDataItem[] = [];
 
-                console.log('rawData = ', rawData);
+            for(let i = 0; i < incomesData.items.length; i++) {
+                formattedChartData.push({
+                    name: incomesData.items[i].item.item_details.name,
+                    value: Number(incomesData.items[i].calculated_amount),
+                    color: PIE_CHAT_COLOR_MAP[incomesData.items[i].item.item_details.income_category],
+                });
+            }
 
-                const formattedChartData: ChartDataItem[] = [];
+            setIncomeTableData(incomesData.items);
+            setIncomeTotal(incomesData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0))
 
-                for(let i = 0; i < rawData.items.length; i++) {
-                    formattedChartData.push({
-                        name: rawData.items[i].item.item_details.name,
-                        value: Number(rawData.items[i].calculated_amount),
-                        // Fallback to gray if category isn't in our map
-                        color: EXPENSE_COLOR_MAP[rawData.items[i].item.item_details.expense_category] || 'gray.4',
-                    });
-                }
+            for(let i = 0; i < expensesData.items.length; i++) {
+                formattedChartData.push({
+                    name: expensesData.items[i].item.item_details.name,
+                    value: Number(expensesData.items[i].calculated_amount),
+                    color: PIE_CHAT_COLOR_MAP[expensesData.items[i].item.item_details.expense_category],
+                });
+            }
 
-                console.log('formattedData = ', formattedChartData);
-                setExpenseTotal(rawData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0));
-                setExpenseTableData(rawData.items);
-                return formattedChartData;
-            })
-            .then(result => {
-                setExpenseGraphData(result);
-            })
-            .catch(error => {
-                console.error("Failed fetching: ", error);
-                setError(error);
-            })
-            .finally(() => {
-                setLoading(false);
-            })
+            setExpenseTableData(expensesData.items);
+            setExpenseTotal(expensesData.items.reduce((acc, item) => acc + Number(item.calculated_amount), 0))
+
+            setGraphData(formattedChartData);
+        }
+
+        void fetchData();
     }, [frequency]);
 
     const incomeTableDataProp: TableData = useMemo(() => {
 
         return {
-            head: ['Name', 'Category', 'Amount'],
+            head: ['Income', 'Category', 'Amount'],
             body: incomeTableData.map((item) => [
                 item.item.item_details.name,
                 item.item.item_details.income_category,
@@ -158,7 +121,7 @@ export default function Summary() {
     const expenseTableDataProp: TableData = useMemo(() => {
 
         return {
-            head: ['Name', 'Category', 'Amount'],
+            head: ['Expense', 'Category', 'Amount'],
             body: expenseTableData.map((item) => [
                 item.item.item_details.name,
                 item.item.item_details.expense_category,
@@ -171,12 +134,6 @@ export default function Summary() {
     const spendingPower = useMemo(() => {
         return incomeTotal - expenseTotal
     }, [incomeTotal, expenseTotal]);
-
-    if (loading)
-        return <Center h={350}><Loader color="blue" /></Center>;
-
-    if (error)
-        return <Center h={350}>Error: {error}</Center>;
 
     return(
         <Container>
@@ -203,57 +160,28 @@ export default function Summary() {
                 </Grid.Col>
             </Grid>
 
-            <Grid gutter="md" align="flex-start">
-                <Grid.Col span={{ base: 12, md: 6 }}>
+            <Stack>
 
-                    <h2>Income</h2>
-                    <Box h={280} w={350}>
-                        <PieChart
-                            data={incomeGraphData}
-                            labelsPosition={"outside"}
-                            labelsType={"percent"}
-                            size={200}
-                            withLabels
-                            withTooltip
-                        />
-                    </Box>
+                <PieChart
+                    data={graphData}
+                    labelsPosition={"outside"}
+                    labelsType={"value"}
+                    size={200}
+                    withLabels
+                    withTooltip
 
-                </Grid.Col>
+                />
 
-                <Grid.Col span={{ base: 12, md: 6 }}>
+                <Paper withBorder>
+                    <Table data={incomeTableDataProp} highlightOnHover verticalSpacing="sm" />
+                </Paper>
 
-                    <h2>Breakdown</h2>
-                    <Paper withBorder>
-                        <Table data={incomeTableDataProp} highlightOnHover verticalSpacing="sm" horizontalSpacing="md" />
-                    </Paper>
+                <Paper withBorder>
+                    <Table data={expenseTableDataProp} highlightOnHover verticalSpacing="sm" />
+                </Paper>
 
-                </Grid.Col>
-            </Grid>
-            <Grid>
-                <Grid.Col span={{ base: 12, md: 6 }}>
+            </Stack>
 
-                    <h2>Expenses</h2>
-                    <Box h={200} w={200}>
-                        <PieChart
-                            data={expenseGraphData}
-                            labelsPosition={"outside"}
-                            labelsType={"percent"}
-                            size={200}
-                            withLabels
-                            withTooltip
-                        />
-                    </Box>
-
-                </Grid.Col>
-                <Grid.Col span={{ base: 12, md: 6 }}>
-
-                    <h2>Breakdown</h2>
-                    <Paper withBorder p="md" radius="md" h="100%">
-                        <Table data={expenseTableDataProp} highlightOnHover verticalSpacing="sm" />
-                    </Paper>
-
-                </Grid.Col>
-            </Grid>
         </Container>
     );
 }
